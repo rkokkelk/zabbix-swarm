@@ -33,7 +33,7 @@
             <items>
                 <item>
                     <name>Docker swarm raw info</name>
-                    <type>HTTP_AGENT</type>
+                    <type>ZABBIX_ACTIVE</type>
                     <key>docker.swarm.info.raw</key>
                     <history>0</history>
                     <trends>0</trends>
@@ -43,10 +43,6 @@
                             <name>Docker swarm raw</name>
                         </application>
                     </applications>
-                    <timeout>10s</timeout>
-                    <url>https://{HOST.DNS}:2376/swarm</url>
-                    <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                    <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
                 </item>
                 <item>
                     <name>Docker swarm leader node</name>
@@ -99,7 +95,7 @@
                 </item>
                 <item>
                     <name>Docker swarm nodes raw</name>
-                    <type>HTTP_AGENT</type>
+                    <type>ZABBIX_ACTIVE</type>
                     <key>docker.swarm.nodes.raw</key>
                     <history>0</history>
                     <trends>0</trends>
@@ -109,10 +105,6 @@
                             <name>Docker swarm raw</name>
                         </application>
                     </applications>
-                    <timeout>10s</timeout>
-                    <url>https://{HOST.DNS}:2376/nodes</url>
-                    <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                    <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
                 </item>
                 <item>
                     <name>Docker swarm ready nodes</name>
@@ -167,7 +159,7 @@
                 </item>
                 <item>
                     <name>Docker swarm services raw</name>
-                    <type>HTTP_AGENT</type>
+                    <type>ZABBIX_ACTIVE</type>
                     <key>docker.swarm.services.raw</key>
                     <delay>5m</delay>
                     <history>0</history>
@@ -178,14 +170,10 @@
                             <name>Docker swarm raw</name>
                         </application>
                     </applications>
-                    <timeout>10s</timeout>
-                    <url>https://{HOST.DNS}:2376/services</url>
-                    <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                    <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
                 </item>
                 <item>
                     <name>Docker swarm tasks raw info</name>
-                    <type>HTTP_AGENT</type>
+                    <type>ZABBIX_ACTIVE</type>
                     <key>docker.swarm.tasks.raw.info</key>
                     <history>0</history>
                     <trends>0</trends>
@@ -195,10 +183,6 @@
                             <name>Docker swarm raw</name>
                         </application>
                     </applications>
-                    <timeout>10s</timeout>
-                    <url>https://{HOST.DNS}:2376/tasks</url>
-                    <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                    <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
                 </item>
                 <item>
                     <name>Docker swarm updated at</name>
@@ -235,139 +219,8 @@
             </items>
             <discovery_rules>
                 <discovery_rule>
-                    <name>Docker swarm containers discovery</name>
-                    <type>HTTP_AGENT</type>
-                    <key>docker.containers.lld</key>
-                    <delay>10m</delay>
-                    <status>DISABLED</status>
-                    <lifetime>10d</lifetime>
-                    <item_prototypes>
-                        <item_prototype>
-                            <name>{#NAME} CPU usage</name>
-                            <type>DEPENDENT</type>
-                            <key>docker.container.cpu[{#ID}]</key>
-                            <delay>0</delay>
-                            <history>30d</history>
-                            <preprocessing>
-                                <step>
-                                    <type>JSONPATH</type>
-                                    <params>$.cpu_stats.cpu_usage.total_usage</params>
-                                </step>
-                                <step>
-                                    <type>SIMPLE_CHANGE</type>
-                                    <params/>
-                                </step>
-                            </preprocessing>
-                            <master_item>
-                                <key>docker.container.stats[{#ID}]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>{#NAME} CPU load %</name>
-                            <type>CALCULATED</type>
-                            <key>docker.container.cpu_load[{#ID}]</key>
-                            <history>30d</history>
-                            <value_type>FLOAT</value_type>
-                            <units>!%</units>
-                            <params>last(&quot;docker.container.cpu[{#ID}]&quot;)/last(&quot;docker.container.system_cpu[{#ID}]&quot;)*last(&quot;docker.container.cpu_num[{#ID}]&quot;)</params>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>{#NAME} CPU number</name>
-                            <type>DEPENDENT</type>
-                            <key>docker.container.cpu_num[{#ID}]</key>
-                            <delay>0</delay>
-                            <history>30d</history>
-                            <preprocessing>
-                                <step>
-                                    <type>JSONPATH</type>
-                                    <params>$.cpu_stats.cpu_usage.percpu_usage.length()</params>
-                                </step>
-                            </preprocessing>
-                            <master_item>
-                                <key>docker.container.stats[{#ID}]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>{#NAME} Mem usage</name>
-                            <type>DEPENDENT</type>
-                            <key>docker.container.mem[{#ID}]</key>
-                            <delay>0</delay>
-                            <history>30d</history>
-                            <units>B</units>
-                            <preprocessing>
-                                <step>
-                                    <type>JSONPATH</type>
-                                    <params>$.memory_stats.usage</params>
-                                </step>
-                            </preprocessing>
-                            <master_item>
-                                <key>docker.container.stats[{#ID}]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Raw data container stats {#NAME}</name>
-                            <type>HTTP_AGENT</type>
-                            <key>docker.container.stats[{#ID}]</key>
-                            <history>2d</history>
-                            <trends>0</trends>
-                            <value_type>TEXT</value_type>
-                            <timeout>10s</timeout>
-                            <url>https://{HOST.DNS}:2376/containers/{#ID}/stats?stream=0</url>
-                            <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                            <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>{#NAME} CPU system usage</name>
-                            <type>DEPENDENT</type>
-                            <key>docker.container.system_cpu[{#ID}]</key>
-                            <delay>0</delay>
-                            <history>30d</history>
-                            <preprocessing>
-                                <step>
-                                    <type>JSONPATH</type>
-                                    <params>$.cpu_stats.system_cpu_usage</params>
-                                </step>
-                                <step>
-                                    <type>SIMPLE_CHANGE</type>
-                                    <params/>
-                                </step>
-                            </preprocessing>
-                            <master_item>
-                                <key>docker.container.stats[{#ID}]</key>
-                            </master_item>
-                        </item_prototype>
-                        <item_prototype>
-                            <name>Raw data container info {#NAME}</name>
-                            <type>HTTP_AGENT</type>
-                            <key>docker.container[{#ID}]</key>
-                            <delay>5m</delay>
-                            <history>2d</history>
-                            <trends>0</trends>
-                            <value_type>TEXT</value_type>
-                            <timeout>10s</timeout>
-                            <url>https://{HOST.DNS}:2376/containers/{#ID}/json</url>
-                            <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                            <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
-                        </item_prototype>
-                    </item_prototypes>
-                    <timeout>10s</timeout>
-                    <url>https://{HOST.DNS}:2376/containers/json</url>
-                    <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                    <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
-                    <lld_macro_paths>
-                        <lld_macro_path>
-                            <lld_macro>{#ID}</lld_macro>
-                            <path>$.Id</path>
-                        </lld_macro_path>
-                        <lld_macro_path>
-                            <lld_macro>{#NAME}</lld_macro>
-                            <path>$.Names[*].first()</path>
-                        </lld_macro_path>
-                    </lld_macro_paths>
-                </discovery_rule>
-                <discovery_rule>
                     <name>Docker swarm nodes discovery</name>
-                    <type>HTTP_AGENT</type>
+                    <type>ZABBIX_ACTIVE</type>
                     <key>docker.swarm.nodes.lld</key>
                     <delay>1h</delay>
                     <status>DISABLED</status>
@@ -492,21 +345,13 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Raw data node {#NAME} at {#ADDR}</name>
-                            <type>HTTP_AGENT</type>
+                            <type>ZABBIX_ACTIVE</type>
                             <key>docker.nodes[{#ID}]</key>
                             <delay>5m</delay>
                             <trends>0</trends>
                             <value_type>TEXT</value_type>
-                            <timeout>10s</timeout>
-                            <url>https://{HOST.DNS}:2376/nodes/{#ID}</url>
-                            <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                            <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
                         </item_prototype>
                     </item_prototypes>
-                    <timeout>10s</timeout>
-                    <url>https://{HOST.DNS}:2376/nodes</url>
-                    <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                    <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
                     <lld_macro_paths>
                         <lld_macro_path>
                             <lld_macro>{#ADDR}</lld_macro>
@@ -524,7 +369,7 @@
                 </discovery_rule>
                 <discovery_rule>
                     <name>Docker swarm services discovery</name>
-                    <type>HTTP_AGENT</type>
+                    <type>ZABBIX_ACTIVE</type>
                     <key>docker.swarm.services.lld</key>
                     <delay>5m</delay>
                     <lifetime>10d</lifetime>
@@ -598,10 +443,6 @@
                             </trigger_prototypes>
                         </item_prototype>
                     </item_prototypes>
-                    <timeout>20s</timeout>
-                    <url>https://{HOST.DNS}:2376/services</url>
-                    <ssl_cert_file>{$CERT_FNAME}</ssl_cert_file>
-                    <ssl_key_file>{$KEY_FNAME}</ssl_key_file>
                     <lld_macro_paths>
                         <lld_macro_path>
                             <lld_macro>{#ID}</lld_macro>
@@ -618,16 +459,6 @@
                     </lld_macro_paths>
                 </discovery_rule>
             </discovery_rules>
-            <macros>
-                <macro>
-                    <macro>{$CERT_FNAME}</macro>
-                    <value>dclient-cert.pem</value>
-                </macro>
-                <macro>
-                    <macro>{$KEY_FNAME}</macro>
-                    <value>dclient-key.pem</value>
-                </macro>
-            </macros>
         </template>
     </templates>
 </zabbix_export>
